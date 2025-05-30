@@ -1,7 +1,10 @@
 const input = document.getElementById("todo-input");
 const button = document.getElementById("submit");
 const listContainer = document.getElementById("todo-lists");
+const clearBtn = document.getElementById("clear-all");
+const removeCompletedBtn = document.getElementById("remove-completed");
 
+// Add task on button click
 button.addEventListener("click", () => {
   const task = input.value.trim();
   if (task === "") return;
@@ -9,6 +12,14 @@ button.addEventListener("click", () => {
   input.value = "";
 });
 
+// Add task on Enter key
+input.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    button.click();
+  }
+});
+
+// Add a new todo item
 function addTodo(task) {
   const item = document.createElement("div");
   item.className = "todo-item";
@@ -50,9 +61,18 @@ function addTodo(task) {
     listContainer.removeChild(item);
   };
 
+  const likeBtn = document.createElement("i");
+  likeBtn.className = "fa-regular fa-heart";
+  likeBtn.onclick = () => {
+    likeBtn.classList.toggle("fa-solid");
+    likeBtn.classList.toggle("fa-regular");
+    likeBtn.style.color = likeBtn.classList.contains("fa-solid") ? "red" : "";
+  };
+
   actionDiv.appendChild(checkBtn);
   actionDiv.appendChild(editBtn);
   actionDiv.appendChild(deleteBtn);
+  actionDiv.appendChild(likeBtn);
 
   item.appendChild(textInput);
   item.appendChild(actionDiv);
@@ -61,19 +81,22 @@ function addTodo(task) {
   addDragEvents(item);
 }
 
+// Drag-and-drop handlers
 function addDragEvents(el) {
   el.addEventListener("dragstart", () => {
     el.classList.add("dragging");
   });
+
   el.addEventListener("dragend", () => {
     el.classList.remove("dragging");
   });
 }
 
-listContainer.addEventListener("dragover", e => {
+listContainer.addEventListener("dragover", (e) => {
   e.preventDefault();
   const afterElement = getDragAfterElement(listContainer, e.clientY);
   const dragging = document.querySelector(".dragging");
+  if (!dragging) return;
   if (afterElement == null) {
     listContainer.appendChild(dragging);
   } else {
@@ -83,13 +106,35 @@ listContainer.addEventListener("dragover", e => {
 
 function getDragAfterElement(container, y) {
   const draggableElements = [...container.querySelectorAll(".todo-item:not(.dragging)")];
+
   return draggableElements.reduce((closest, child) => {
     const box = child.getBoundingClientRect();
     const offset = y - box.top - box.height / 2;
+
     if (offset < 0 && offset > closest.offset) {
-      return { offset, element: child };
+      return { offset: offset, element: child };
     } else {
       return closest;
     }
   }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// Clear all tasks
+if (clearBtn) {
+  clearBtn.addEventListener("click", () => {
+    listContainer.innerHTML = "";
+  });
+}
+
+// Remove only completed tasks
+if (removeCompletedBtn) {
+  removeCompletedBtn.addEventListener("click", () => {
+    const todos = listContainer.querySelectorAll(".todo-item");
+    todos.forEach(todo => {
+      const inputField = todo.querySelector("input[type='text']");
+      if (inputField.classList.contains("done")) {
+        listContainer.removeChild(todo);
+      }
+    });
+  });
 }
